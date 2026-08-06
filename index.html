@@ -1,137 +1,114 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Smart Quiz Scoreboard</title>
-    <link rel="stylesheet" href="style.css">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Smart Quiz Scoreboard</title>
+  <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
-<button id="menuBtn">☰</button>
-<button id="fullscreenBtn">⛶</button>
+<button id="menuBtn" title="Open Settings">☰ Settings</button>
+<button id="fullscreenBtn" title="Toggle Fullscreen">⛶</button>
 
 <aside id="sidebar">
-    <h2>Settings</h2>
-    <label>Round Name</label>
-    <input id="roundInput" placeholder="e.g. Science">
+  <div class="sidebar-header">
+    <h2>Game Settings</h2>
+  </div>
+  
+  <div class="field-group">
+    <label for="roundInput">Round Name</label>
+    <input id="roundInput" placeholder="e.g. Science / Rapid Fire">
+  </div>
 
-    <label>Number of Teams</label>
+  <div class="field-group">
+    <label for="teamCount">Number of Teams</label>
     <select id="teamCount">
-        <option value="2">2</option>
-        <option value="3">3</option>
-        <option value="4" selected>4</option>
-        <option value="5">5</option>
-        <option value="6">6</option>
-        <option value="7">7</option>
-        <option value="8">8</option>
+      <option value="2">2 Teams</option>
+      <option value="3">3 Teams</option>
+      <option value="4" selected>4 Teams</option>
+      <option value="5">5 Teams</option>
+      <option value="6">6 Teams</option>
+      <option value="7">7 Teams</option>
+      <option value="8">8 Teams</option>
     </select>
+  </div>
 
-    <div id="teamNames"></div>
-    <hr>
+  <div class="field-group">
+    <label>Edit Team Names</label>
+    <div id="teamNames" class="team-names-list"></div>
+  </div>
+
+  <hr>
+
+  <div class="sidebar-section">
     <h3>🎰 Gambling Round</h3>
-    <input type="number" id="gambleAmount" placeholder="20 / 40 / 60">
-    <div class="row">
-        <button onclick="gamble(true)">Win</button>
-        <button onclick="gamble(false)">Lose</button>
+    <div class="gamble-controls">
+      <input type="number" id="gambleAmount" placeholder="Points (e.g. 20)">
+      <div class="row">
+        <button class="btn-success" onclick="gamble(true)">Win</button>
+        <button class="btn-danger-outline" onclick="gamble(false)">Lose</button>
+      </div>
     </div>
-    <hr>
+  </div>
+
+  <hr>
+
+  <div class="sidebar-actions">
     <button class="warning-btn" onclick="clearHistory()">🗑️ Clear Records</button>
-    <button class="danger" onclick="resetAll()">Reset Game</button>
+    <button class="danger" onclick="resetAll()">⚠️ Reset Entire Game</button>
+  </div>
 </aside>
 
 <main class="app">
+  <header class="app-header">
     <h1>Smart Quiz Scoreboard</h1>
-    <h2 id="roundTitle">Round: -</h2>
+    <span id="roundTitle" class="round-badge">Round: -</span>
+  </header>
 
-    <div class="timer">
-        <div class="timer-display">
-            <span id="time">30</span><small>s</small>
-        </div>
-        <div class="timer-btns">
-            <button onclick="toggleTimer()" id="playPauseBtn" class="icon-btn">
-                <svg id="playIcon" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
-                <svg id="pauseIcon" style="display:none" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="4" width="4" height="16"></rect><rect x="14" y="4" width="4" height="16"></rect></svg>
-            </button>
-            <button onclick="resetTimer()" class="icon-btn reset">
-                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"></path><path d="M3 3v5h5"></path></svg>
-            </button>
-        </div>
-    </div>
-
-    <div id="teams" class="teams"></div>
-
-    <div class="controls">
-        <p>Active Team: <strong id="activeName">-</strong></p>
-        <button class="score-btn" onclick="addScore(10)">+10</button>
-        <button class="score-btn" onclick="addScore(5)">+5</button>
-        <button class="score-btn" onclick="passQuestion()">Pass ➜</button>
-        <button class="score-btn" onclick="nextTurn()">Next ⏭</button>
-    </div>
-
-    <section class="history">
-        <h3>Records</h3>
-        <ul id="historyList"></ul>
-    </section>
-</main>
-
-<audio id="bell" preload="auto">
-    <source src="https://cdn.freesound.org/previews/219/219244_4082831-lq.mp3" type="audio/mpeg">
-</audio>
-
-<script src="script.js"></script>
-</body>
-</html>
-        <button onclick="gamble(false)">Lose</button>
-    </div>
-
-    <hr>
-
-    <button class="danger" onclick="resetAll()">Reset Game</button>
-</aside>
-
-<!-- MAIN DISPLAY -->
-<main class="app">
-    <h1>Smart Quiz Scoreboard</h1>
-    <h2 id="roundTitle">Round: -</h2>
-
-    <div class="timer">
-    <div class="timer-display">
+  <section class="timer-section">
+    <div class="timer-ring">
+      <div class="timer-display">
         <span id="time">30</span><small>s</small>
+      </div>
     </div>
     <div class="timer-btns">
-        <button onclick="toggleTimer()" id="playPauseBtn" class="icon-btn">
-            <svg id="playIcon" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
-            <svg id="pauseIcon" style="display:none" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="4" width="4" height="16"></rect><rect x="14" y="4" width="4" height="16"></rect></svg>
-        </button>
-        
-        <button onclick="resetTimer()" class="icon-btn reset">
-            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"></path><path d="M3 3v5h5"></path></svg>
-        </button>
+      <button onclick="toggleTimer()" id="playPauseBtn" class="icon-btn primary" title="Play/Pause">
+        <svg id="playIcon" xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
+        <svg id="pauseIcon" style="display:none" xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="4" width="4" height="16"></rect><rect x="14" y="4" width="4" height="16"></rect></svg>
+      </button>
+      
+      <button onclick="resetTimer()" class="icon-btn" title="Reset Timer">
+        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"></path><path d="M3 3v5h5"></path></svg>
+      </button>
     </div>
-</div>
+  </section>
 
+  <section id="teams" class="teams"></section>
 
-    <div id="teams" class="teams"></div>
-
-    <div class="controls">
-        <p>Active Team: <strong id="activeName">-</strong></p>
-        <button class="score-btn" onclick="addScore(10)">+10</button>
-        <button class="score-btn" onclick="addScore(5)">+5</button>
-        <button class="score-btn" onclick="passQuestion()">Pass ➜</button>
-        <button class="score-btn" onclick="nextTurn()">Next ⏭</button>
+  <section class="controls-panel">
+    <div class="active-team-indicator">
+      <span>Turn:</span>
+      <strong id="activeName">-</strong>
     </div>
+    <div class="action-buttons">
+      <button class="score-btn add-10" onclick="addScore(10)">+10</button>
+      <button class="score-btn add-5" onclick="addScore(5)">+5</button>
+      <button class="score-btn pass" onclick="passQuestion()">Pass ➜</button>
+      <button class="score-btn next" onclick="nextTurn()">Next Turn ⏭</button>
+      <button class="score-btn undo" id="undoBtn" onclick="undo()" title="Undo last action (Ctrl+Z)">↩ Undo</button>
+    </div>
+  </section>
 
-    <section class="history">
-        <h3>Records</h3>
-        <ul id="historyList"></ul>
-    </section>
+  <section class="history">
+    <h3>Activity Log</h3>
+    <ul id="historyList"></ul>
+  </section>
 </main>
+
 <audio id="bell" preload="auto">
-    <source src="https://cdn.freesound.org/previews/219/219244_4082831-lq.mp3" type="audio/mpeg">
+  <source src="https://cdn.freesound.org/previews/219/219244_4082831-lq.mp3" type="audio/mpeg">
 </audio>
-
-
 
 <script src="script.js"></script>
 </body>
