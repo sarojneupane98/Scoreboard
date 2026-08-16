@@ -9,7 +9,7 @@
 <body>
 
 <button id="menuBtn" title="Open Settings">☰ Settings</button>
-<button id="fullscreenBtn" title="Toggle Fullscreen">⛶</button>
+<button id="fullscreenBtn" title="Toggle Fullscreen" aria-label="Toggle Fullscreen">⛶</button>
 
 <aside id="sidebar">
   <div class="sidebar-header">
@@ -68,8 +68,11 @@
 
   <section class="timer-section">
     <div class="timer-ring">
+      <svg class="progress-ring" width="140" height="140">
+        <circle class="progress-ring__circle" stroke="var(--accent-cyan)" stroke-width="6" fill="transparent" r="64" cx="70" cy="70"/>
+      </svg>
       <div class="timer-display">
-        <span id="time">30</span><small>s</small>
+        <span id="time" aria-live="assertive">30</span><small>s</small>
       </div>
     </div>
     <div class="timer-btns">
@@ -89,7 +92,7 @@
   <section class="controls-panel">
     <div class="active-team-indicator">
       <span>Turn:</span>
-      <strong id="activeName">-</strong>
+      <strong id="activeName" aria-live="polite">-</strong>
     </div>
     <div class="action-buttons">
       <button class="score-btn add-10" onclick="addScore(10)">+10</button>
@@ -108,6 +111,9 @@
 
 <audio id="bell" preload="auto">
   <source src="https://cdn.freesound.org/previews/219/219244_4082831-lq.mp3" type="audio/mpeg">
+</audio>
+<audio id="tick" preload="auto">
+  <source src="https://cdn.freesound.org/previews/256/256173_3263906-lq.mp3" type="audio/mpeg">
 </audio>
 
 <script src="script.js"></script>
