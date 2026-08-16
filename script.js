@@ -1,4 +1,5 @@
 const bell = document.getElementById("bell");
+const tick = document.getElementById("tick");
 let interval;
 
 /* ================= STATE ================= */
@@ -6,26 +7,28 @@ let state = JSON.parse(localStorage.getItem("quizState")) || {
   teams: [],
   active: 0,
   time: 30,
+  maxTime: 30, // Added to track initial timer length for SVG circle
   running: false,
   round: "",
   history: []
 };
 
-// Stack to hold snapshot history for UNDO (not saved to localStorage)
+// Stack to hold snapshot history for UNDO
 let historyStack = [];
 
 /* ================= INIT ================= */
 document.getElementById("menuBtn").onclick = () => document.getElementById("sidebar").classList.toggle("open");
 document.getElementById("fullscreenBtn").onclick = toggleFullscreen;
 document.getElementById("teamCount").onchange = e => initTeams(parseInt(e.target.value));
-document.getElementById("roundInput").oninput = e => {
-  pushState(); // Save state before change
+
+// Changed from oninput to onchange to prevent undo bloat
+document.getElementById("roundInput").onchange = e => {
+  pushState(); 
   state.round = e.target.value;
   save();
   render();
 };
 
-// Global Keyboard Shortcut for Ctrl+Z / Cmd+Z
 document.addEventListener("keydown", e => {
   if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "z") {
     e.preventDefault();
@@ -44,19 +47,15 @@ if (state.teams.length === 0) {
 render();
 
 /* ================= UNDO ENGINE ================= */
-// Saves a deep clone of the current state before modifying it
 function pushState() {
   historyStack.push(JSON.stringify(state));
-  if (historyStack.length > 30) historyStack.shift(); // Limit stack size
+  if (historyStack.length > 30) historyStack.shift(); 
 }
 
 function undo() {
   if (historyStack.length === 0) return;
   
-  // Stop current timer to avoid timer mismatch
   pauseTimer();
-  
-  // Restore previous state
   const previousState = historyStack.pop();
   state = JSON.parse(previousState);
   
@@ -67,10 +66,8 @@ function undo() {
 /* ================= CORE FUNCTIONS ================= */
 function unlockAudio() {
   const unlock = () => {
-    bell.play().then(() => {
-      bell.pause();
-      bell.currentTime = 0;
-    }).catch(e => console.log("Audio unlock required"));
+    bell.play().then(() => { bell.pause(); bell.currentTime = 0; }).catch(() => {});
+    tick.play().then(() => { tick.pause(); tick.currentTime = 0; }).catch(() => {});
     document.removeEventListener("click", unlock);
   };
   document.addEventListener("click", unlock);
@@ -88,10 +85,11 @@ function initTeams(count) {
 function renderNames() {
   const box = document.getElementById("teamNames");
   box.innerHTML = "";
-  state.teams.forEach((t, i) => {
+  state.teams.forEach((t) => {
     const input = document.createElement("input");
     input.value = t.name;
-    input.oninput = e => { 
+    // Changed from oninput to onchange to prevent undo bloat
+    input.onchange = e => { 
       pushState();
       t.name = e.target.value; 
       save(); 
@@ -103,17 +101,26 @@ function renderNames() {
 
 /* ================= TIMER ================= */
 function toggleTimer() {
-  state.running ? pauseTimer() : startTimer(state.time);
+  state.running ? pauseTimer() : startTimer(state.time === 0 ? state.maxTime : state.time);
 }
 
 function startTimer(sec) {
   clearInterval(interval);
   state.time = sec;
+  // Update maxTime if this is a fresh timer start (not a resume)
+  if (sec === 15 || sec === 30) state.maxTime = sec; 
   state.running = true;
   render();
   
   interval = setInterval(() => {
     state.time--;
+    
+    // Play tick sound in the critical window
+    if (state.time <= 5 && state.time > 0) {
+      tick.currentTime = 0;
+      tick.play().catch(() => {});
+    }
+    
     if (state.time <= 0) {
       state.time = 0;
       pauseTimer();
@@ -136,6 +143,7 @@ function resetTimer() {
   pushState();
   pauseTimer();
   state.time = 30;
+  state.maxTime = 30;
   save();
   render();
 }
@@ -148,7 +156,7 @@ function log(action, pts) {
 }
 
 function addScore(pts) {
-  pushState(); // Save state before changing score
+  pushState();
   state.teams[state.active].score += pts;
   log("Earned", pts);
   save();
@@ -156,7 +164,7 @@ function addScore(pts) {
 }
 
 function passQuestion() {
-  pushState(); // Save state before changing active turn
+  pushState();
   state.active = (state.active + 1) % state.teams.length;
   startTimer(15);
   save();
@@ -164,19 +172,21 @@ function passQuestion() {
 }
 
 function nextTurn() {
-  pushState(); // Save state before changing turn
+  pushState(); 
   state.active = (state.active + 1) % state.teams.length;
   pauseTimer();
   state.time = 30;
+  state.maxTime = 30;
   save();
   render();
 }
 
 function gamble(win) {
-  const v = parseInt(document.getElementById("gambleAmount").value) || 0;
+  // Added Math.abs() to prevent negative wagering logic errors
+  const v = Math.abs(parseInt(document.getElementById("gambleAmount").value) || 0);
   if (!v) return alert("Enter amount");
   
-  pushState(); // Save state before gambling
+  pushState(); 
   const pts = win ? v : -(v / 2);
   state.teams[state.active].score += pts;
   log(win ? "Gambled (Win)" : "Gambled (Loss)", pts);
@@ -217,16 +227,36 @@ function render() {
     pauseIcon.style.display = state.running ? "block" : "none";
   }
 
-  // Timer
+  // Timer & SVG Ring Logic
   const timeEl = document.getElementById("time");
   timeEl.innerText = state.time;
-  state.running && state.time <= 5 && state.time > 0 ? 
-    timeEl.classList.add("critical") : timeEl.classList.remove("critical");
+  
+  const circle = document.querySelector('.progress-ring__circle');
+  if (circle) {
+    const radius = circle.r.baseVal.value;
+    const circumference = radius * 2 * Math.PI;
+    circle.style.strokeDasharray = `${circumference} ${circumference}`;
+    
+    // Calculate ratio (prevent dividing by 0)
+    const maxT = state.maxTime || 30;
+    const ratio = Math.max(0, state.time / maxT);
+    const offset = circumference - ratio * circumference;
+    circle.style.strokeDashoffset = offset;
+    
+    // Switch color during critical time
+    if (state.running && state.time <= 5 && state.time > 0) {
+      timeEl.classList.add("critical");
+      circle.style.stroke = "var(--danger-color)";
+    } else {
+      timeEl.classList.remove("critical");
+      circle.style.stroke = "var(--accent-cyan)";
+    }
+  }
 
   document.getElementById("roundTitle").innerText = "Round: " + (state.round || "-");
   document.getElementById("activeName").innerText = state.teams[state.active]?.name || "-";
 
-  // Teams
+  // Teams - XSS Mitigation (Replaced innerHTML with DOM creation)
   const max = Math.max(...state.teams.map(t => t.score));
   const teamsDiv = document.getElementById("teams");
   teamsDiv.innerHTML = "";
@@ -234,6 +264,7 @@ function render() {
   state.teams.forEach((t, i) => {
     const d = document.createElement("div");
     d.className = `team ${i === state.active ? 'active' : ''} ${t.score === max && max > 0 ? 'leader' : ''}`;
+    
     d.onclick = () => { 
       if (state.active !== i) {
         pushState();
@@ -242,14 +273,28 @@ function render() {
         render(); 
       }
     };
-    d.innerHTML = `<h3>${t.name}</h3><div class="score">${t.score}</div>`;
+    
+    const h3 = document.createElement("h3");
+    h3.textContent = t.name;
+    
+    const scoreDiv = document.createElement("div");
+    scoreDiv.className = "score";
+    scoreDiv.textContent = t.score;
+    
+    d.appendChild(h3);
+    d.appendChild(scoreDiv);
     teamsDiv.appendChild(d);
   });
 
-  // Records
-  document.getElementById("historyList").innerHTML = state.history.map(h => `<li>${h}</li>`).join("");
+  // Records - XSS Mitigation (Replaced innerHTML template literals)
+  const historyList = document.getElementById("historyList");
+  historyList.innerHTML = "";
+  state.history.forEach(h => {
+    const li = document.createElement("li");
+    li.textContent = h;
+    historyList.appendChild(li);
+  });
 
-  // Enable/Disable Undo Button state
   const undoBtn = document.getElementById("undoBtn");
   if (undoBtn) {
     undoBtn.disabled = historyStack.length === 0;
