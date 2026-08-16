@@ -411,3 +411,54 @@ body:has(#sidebar.open) .app {
   transform: none !important;
   filter: none !important;
 }
+/* TIMER */
+.timer-section {
+  margin: 30px 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+.timer-ring {
+  position: relative; /* Added to contain absolute SVG */
+  background: var(--panel-bg);
+  border: 1px solid var(--panel-border);
+  width: 140px;
+  height: 140px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+}
+
+/* New SVG classes */
+.progress-ring {
+  position: absolute;
+  top: 0;
+  left: 0;
+  transform: rotate(-90deg); /* Start animation from the top */
+}
+.progress-ring__circle {
+  transition: stroke-dashoffset 1s linear, stroke 0.3s ease;
+  transform-origin: 50% 50%;
+}
+
+.timer-display {
+  position: relative;
+  z-index: 2; /* Keep text above the SVG line */
+  font-size: 4rem;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  color: var(--accent-cyan);
+  line-height: 1;
+}
+.timer-display small {
+  font-size: 1.2rem;
+  color: var(--text-secondary);
+  font-weight: 500;
+}
+.timer-btns {
+  display: flex;
+  gap: 12px;
+  margin-top: 16px;
+}
